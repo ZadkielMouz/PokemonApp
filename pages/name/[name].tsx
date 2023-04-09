@@ -130,8 +130,8 @@ export const getStaticPaths: GetStaticPaths = async (ctx) => {
         paths: data.results.map(({name}) => ({
             params: { name }
         })),
-        // fallback: "blocking" //Esto hace que permita pasar a las demás rutas así no existan, las props sería null y habría que manejar eso.
-        fallback: false //Colocando esto en false hace que al ingresar a una ruta que no esté definida, mande un error 404
+        fallback: "blocking" //Esto hace que permita pasar a las demás rutas así no existan, las props sería null y habría que manejar eso.
+        // fallback: false //Colocando esto en false hace que al ingresar a una ruta que no esté definida, mande un error 404
     }
 }
 
@@ -139,10 +139,22 @@ export const getStaticPaths: GetStaticPaths = async (ctx) => {
 export const getStaticProps: GetStaticProps = async ({ params }) => {
     const { name } = params as { name: string }; // Esto se hace para colocar el tipado a los params
 
+    const pokemon = await getPokemonInfo( name );
+    
+    if( !pokemon ) {
+        return {
+            redirect: {
+                destination: '/',
+                permanent: false
+            }
+        }
+    }
+
     return {
         props: {
-            pokemon: await getPokemonInfo( name )
-        }
+            pokemon: pokemon
+        },
+        revalidate: 86400 // 60seg * 60min * 24h *se regenera la app cada 24 horas*
     }
 }
 
